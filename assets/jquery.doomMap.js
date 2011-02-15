@@ -39,7 +39,10 @@
         var mapCenterLat = '49.24535683689393';
         var mapCenterLng = '25.576156249999986';
 
-        if (self.config.startLocation.length && typeof self.config.locations[self.config.startLocation - 1] === 'object') {
+		if (self.config.mapOptions.center && typeof self.config.mapOptions.center === 'object') {
+			mapCenterLat = self.config.mapOptions.center.lat;
+			mapCenterLng = self.config.mapOptions.center.lng;
+		} else if (self.config.startLocation.length && typeof self.config.locations[self.config.startLocation - 1] === 'object') {
             mapCenterLat = self.config.locations[self.config.startLocation - 1].lat;
             mapCenterLng = self.config.locations[self.config.startLocation - 1].lng;
         }
