@@ -4,11 +4,11 @@
 * A Google Map Plugin for jQuery.
 *
 * @author Dumitru Glavan
-* @version 1.0
+* @version 1.1
 * @requires jQuery v1.4.2 or later
 * @requires Google Maps V3
 *
-* Examples and documentation at: https://github.com/doomhz/jQuery-GoogleMap
+* Examples and documentation at: https://github.com/doomhz/jQuery-GoogleMaps
 * Dual licensed under the MIT and GPL licenses:
 *   http://www.opensource.org/licenses/mit-license.php
 *   http://www.gnu.org/licenses/gpl.html
@@ -26,7 +26,7 @@
                        mapOptions:{
                           zoom: 5,
                           center: null,
-                          mapTypeId: null
+                          mapTypeId: 'TERRAIN'
                        },
                        afterLoad: null,
                        onDrag: null
@@ -48,7 +48,8 @@
         }
 
         this.config.mapOptions.center = new google.maps.LatLng(mapCenterLat, mapCenterLng);
-        this.config.mapOptions.mapTypeId = google.maps.MapTypeId.TERRAIN;
+		this.config.mapOptions.mapTypeId = this.config.mapOptions.mapTypeId || 'TERRAIN';
+        this.config.mapOptions.mapTypeId = google.maps.MapTypeId[self.config.mapOptions.mapTypeId];
 
         var _map = self.config.map = new google.maps.Map(document.getElementById($self.attr('id')), self.config.mapOptions);
 
