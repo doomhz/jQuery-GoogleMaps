@@ -60,39 +60,43 @@
         var articolLinkText = '<a href="{link}">Read article</a>';
         var tripCoordinates = [];
 
-        $.each(this.config.locations, function (index, data) {
-            tripCoordinates.push(new google.maps.LatLng(data.lat, data.lng));
+		if (self.config.locations) {
+			$.each(this.config.locations, function (index, data) {
+				tripCoordinates.push(new google.maps.LatLng(data.lat, data.lng));
 
-            _markers.push(
-                new google.maps.Marker({
-                    position: new google.maps.LatLng(data.lat, data.lng),
-                    map: _map,
-                    title: data.no,
-                    icon: (data.no == self.config.startLocation ? self.config.currentDotMarker.replace('{nr}', data.no) : new google.maps.MarkerImage(self.config.normalDotMarker, null, null, {x:6.4, y:6}))
-                })
-            );
+				_markers.push(
+					new google.maps.Marker({
+						position: new google.maps.LatLng(data.lat, data.lng),
+						map: _map,
+						title: data.no,
+						icon: (data.no == self.config.startLocation ? self.config.currentDotMarker.replace('{nr}', data.no) : new google.maps.MarkerImage(self.config.normalDotMarker, null, null, {x:6.4, y:6}))
+					})
+				);
 
-            _infoWindows.push(
-                new google.maps.InfoWindow({
-                    content: infoWindowText.replace('{title}', data.title).replace('{desc}', data.desc).replace('{articolLink}', (data.url.length ? articolLinkText.replace('{link}', data.url) : '')).replace('{nr}', data.no).replace('{photoLink}', (data.url_poze.length ? photoLinkText.replace('{link}', data.url_poze) : '')).replace('{linkSeparator}', (data.url.length && data.url_poze.length ? ' | ' : ''))
-                })
-            );
+				_infoWindows.push(
+					new google.maps.InfoWindow({
+						content: infoWindowText.replace('{title}', data.title).replace('{desc}', data.desc).replace('{articolLink}', (data.url.length ? articolLinkText.replace('{link}', data.url) : '')).replace('{nr}', data.no).replace('{photoLink}', (data.url_poze.length ? photoLinkText.replace('{link}', data.url_poze) : '')).replace('{linkSeparator}', (data.url.length && data.url_poze.length ? ' | ' : ''))
+					})
+				);
 
-            google.maps.event.addListener(_markers[index], 'click', function() {
-                self.closeInfoWindows();
-                _infoWindows[index].open(_map, _markers[index]);
-            });
+				google.maps.event.addListener(_markers[index], 'click', function() {
+					self.closeInfoWindows();
+					_infoWindows[index].open(_map, _markers[index]);
+				});
 
-        });
+			});
+		}
 
-        var tripPath = new google.maps.Polyline({
-            path: tripCoordinates,
-            strokeColor: "#FF0000",
-            strokeOpacity: 1.0,
-            strokeWeight: 2
-        });
+		if (tripCoordinates.length) {
+			var tripPath = new google.maps.Polyline({
+				path: tripCoordinates,
+				strokeColor: "#FF0000",
+				strokeOpacity: 1.0,
+				strokeWeight: 2
+			});
 
-        tripPath.setMap(_map);
+			tripPath.setMap(_map);
+		}
 
         (typeof(this.config.afterLoad) === 'function') && this.config.afterLoad.call(this);
         if (typeof(this.config.onDrag) === 'function') {
@@ -135,5 +139,17 @@
             });
         }
         return geoLocation;
-    }
+    },
+
+	$.fn.addMarker = function (lat, lng, title, icon) {
+		var _map = $(this).data('doomMap');
+		_map.config.markers.push(
+			new google.maps.Marker({
+				position: new google.maps.LatLng(lat, lng),
+				map: _map.config.map
+				//title: title,
+				//icon: icon
+			})
+		);
+	}
 })(jQuery);
