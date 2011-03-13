@@ -4,7 +4,7 @@
 * A Google Map Plugin for jQuery.
 *
 * @author Dumitru Glavan
-* @version 1.1
+* @version 1.2
 * @requires jQuery v1.4.2 or later
 * @requires Google Maps V3
 *
@@ -22,6 +22,7 @@
                        normalDotMarker: null,
                        markers: [],
                        infoWindows: [],
+					   markerCluster: null,
                        map: null,
                        mapOptions:{
                           zoom: 5,
@@ -53,8 +54,6 @@
 
         var _map = self.config.map = new google.maps.Map(document.getElementById($self.attr('id')), self.config.mapOptions);
 
-        var _markers = this.config.markers;
-        var _infoWindows = this.config.infoWindows;
         var infoWindowText = '<div id="info-window"><h1 class="title">{nr}. {title}</h1><div class="content"><p class="description">{desc}</p><p class="read-more">{articolLink}{linkSeparator}{photoLink}</p></div></div>';
         var photoLinkText = '<a href="{link}">Photo album</a>';
         var articolLinkText = '<a href="{link}">Read article</a>';
@@ -64,24 +63,21 @@
 			$.each(this.config.locations, function (index, data) {
 				tripCoordinates.push(new google.maps.LatLng(data.lat, data.lng));
 
-				_markers.push(
-					new google.maps.Marker({
-						position: new google.maps.LatLng(data.lat, data.lng),
-						map: _map,
-						title: data.no,
-						icon: (data.no == self.config.startLocation ? self.config.currentDotMarker.replace('{nr}', data.no) : new google.maps.MarkerImage(self.config.normalDotMarker, null, null, {x:6.4, y:6}))
-					})
-				);
+				var window = self.addInfoWindow({
+					content: infoWindowText.replace('{title}', data.title).replace('{desc}', data.desc).replace('{articolLink}', (data.url.length ? articolLinkText.replace('{link}', data.url) : '')).replace('{nr}', data.no).replace('{photoLink}', (data.url_poze.length ? photoLinkText.replace('{link}', data.url_poze) : '')).replace('{linkSeparator}', (data.url.length && data.url_poze.length ? ' | ' : ''))
+				})
 
-				_infoWindows.push(
-					new google.maps.InfoWindow({
-						content: infoWindowText.replace('{title}', data.title).replace('{desc}', data.desc).replace('{articolLink}', (data.url.length ? articolLinkText.replace('{link}', data.url) : '')).replace('{nr}', data.no).replace('{photoLink}', (data.url_poze.length ? photoLinkText.replace('{link}', data.url_poze) : '')).replace('{linkSeparator}', (data.url.length && data.url_poze.length ? ' | ' : ''))
-					})
-				);
-
-				google.maps.event.addListener(_markers[index], 'click', function() {
-					self.closeInfoWindows();
-					_infoWindows[index].open(_map, _markers[index]);
+				self.addMarker({
+					lat: data.lat,
+					lng: data.lng,
+					title: data.no,
+					icon: (data.no == self.config.startLocation ? self.config.currentDotMarker.replace('{nr}', data.no) : new google.maps.MarkerImage(self.config.normalDotMarker, null, null, {x:6.4, y:6})),
+					events: {
+						'click': function(marker) {
+							this.closeInfoWindows();
+							window.open(this.config.map, marker);
+						}
+					}
 				});
 
 			});
@@ -141,15 +137,54 @@
         return geoLocation;
     },
 
-	$.fn.addMarker = function (lat, lng, title, icon) {
+	$.fn.addMarker = function (options) {
+		var config = $.extend({
+			lat: false,
+			lng: false,
+			title: '',
+			icon: '',
+			events: {
+			}
+		}, options);
+		var self = this;
 		var _map = $(this).data('doomMap');
-		_map.config.markers.push(
-			new google.maps.Marker({
-				position: new google.maps.LatLng(lat, lng),
-				map: _map.config.map
-				//title: title,
-				//icon: icon
-			})
-		);
+		var marker = new google.maps.Marker({
+			position: new google.maps.LatLng(config.lat, config.lng),
+			//map: _map.config.map,
+			title: typeof config.title === 'string' ? config.title : false,
+			icon: typeof config.icon !== 'undefined' ? config.icon : false
+		});
+		if (_map.config.markerCluster) {
+			_map.config.markerCluster.addMarker(marker);
+		} else {
+			marker.setMap(_map.config.map);
+		}
+		_map.config.markers.push(marker);
+		if (config.events && !$.isEmptyObject(config.events)) {
+			$.each(config.events, function (ev, callback) {
+				$.isFunction(callback) && google.maps.event.addListener(marker, ev, function () {callback.call(self, marker)});
+			});
+		}
+		return marker;
+	},
+
+	$.fn.addInfoWindow = function (options) {
+		var config = $.extend({
+			content: ''
+		}, options);
+		var _map = $(this).data('doomMap');
+		var window = new google.maps.InfoWindow({
+			content: config.content
+		});
+		_map.config.infoWindows.push(window);
+		return window;
+	},
+
+	$.fn.map = function () {
+		return $(this).data('doomMap').config.map;
+	}
+
+	$.fn.mapConfig = function () {
+		return $(this).data('doomMap').config;
 	}
 })(jQuery);
